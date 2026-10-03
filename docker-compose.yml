@@ -1,0 +1,23 @@
+services:
+  panel:
+    build: .
+    container_name: clinic-panel
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    env_file:
+      - .env
+    environment:
+      PORT: "3004"
+      HOSTNAME: "0.0.0.0"
+      DATABASE_URL: postgresql://clinic:clinic@clinic-postgres:5432/clinic?sslmode=disable
+      API_URL: http://host.docker.internal:3001/api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - clinic
+
+networks:
+  clinic:
+    external: true
+    name: clinic-api_default
