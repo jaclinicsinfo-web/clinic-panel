@@ -19,6 +19,9 @@ export interface ClinicaResumo {
   planoNome: string;
   adminNome: string | null;
   adminEmail: string | null;
+  status: string;
+  valorMensal: string;
+  situacaoCobranca: string;
 }
 
 export interface AdministradorClinica {
@@ -49,7 +52,10 @@ export async function listarClinicas(): Promise<ClinicaResumo[]> {
         p.codigo AS "planoCodigo",
         p.nome AS "planoNome",
         adm.nome AS "adminNome",
-        adm.email AS "adminEmail"
+        adm.email AS "adminEmail",
+        c.status,
+        c."valorMensal"::text AS "valorMensal",
+        c."situacaoCobranca"
       FROM clinicas c
       JOIN planos p ON p.id = c."planoId"
       LEFT JOIN LATERAL (
@@ -127,6 +133,98 @@ export async function definirLoginInicial(clinicaId: string, email: string, senh
       `,
       [id, emailNormalizado, hash, clinicaId],
     );
+  });
+}
+
+const SITUACOES = ["em_dia", "pendente", "atrasada"] as const;
+
+export async function definirStatusClinica(clinicaId: string, status: "ativa" | "desativada") {
+  await comSistema(async (db) => {
+    const atualizado = await db.query(
+      `UPDATE clinicas SET status = $2, "atualizadoEm" = now() WHERE id = $1`,
+      [clinicaId, status],
+    );
+    if (atualizado.rowCount !== 1) throw new Error("Clínica não encontrada.");
+  });
+}
+
+export function lerValorMensal(valor: string) {
+  const limpo = valor.trim().replace(/\s/g, "").replace(/^R\$/i, "");
+  const normalizado = limpo.includes(",") ? limpo.replace(/\./g, "").replace(",", ".") : limpo;
+  const numero = Number(normalizado);
+  if (!limpo || !Number.isFinite(numero) || numero < 0 || numero > 999999.99) {
+    throw new Error("Informe a mensalidade entre 0 e 999.999,99.");
+  }
+  return numero.toFixed(2);
+}
+
+export async function definirCobranca(clinicaId: string, valor: string, situacao: string) {
+  if (!SITUACOES.includes(situacao as (typeof SITUACOES)[number])) {
+    throw new Error("Situação da cobrança inválida.");
+  }
+  const mensalidade = lerValorMensal(valor);
+
+  await comSistema(async (db) => {
+    const atualizado = await db.query(
+      `
+      UPDATE clinicas
+      SET "valorMensal" = $2, "situacaoCobranca" = $3, "atualizadoEm" = now()
+      WHERE id = $1
+      `,
+      [clinicaId, mensalidade, situacao],
+    );
+    if (atualizado.rowCount !== 1) throw new Error("Clínica não encontrada.");
+  });
+}
+
+const APAGAR_CLINICA = [
+  `DELETE FROM envios_lembrete WHERE "clinicaId" = $1`,
+  `DELETE FROM custos_envio WHERE "clinicaId" = $1`,
+  `DELETE FROM regras_lembrete WHERE "clinicaId" = $1`,
+  `DELETE FROM templates_mensagem WHERE "clinicaId" = $1`,
+  `DELETE FROM integracoes_clinica WHERE "clinicaId" = $1`,
+  `DELETE FROM holerites WHERE "clinicaId" = $1`,
+  `DELETE FROM registros_ponto WHERE "clinicaId" = $1`,
+  `DELETE FROM notificacoes WHERE "clinicaId" = $1`,
+  `DELETE FROM recuperacoes_senha WHERE "usuarioId" IN (SELECT id FROM usuarios WHERE "clinicaId" = $1)`,
+  `DELETE FROM movimentacoes_estoque WHERE "clinicaId" = $1`,
+  `DELETE FROM produtos_estoque WHERE "clinicaId" = $1`,
+  `DELETE FROM comissoes WHERE "clinicaId" = $1`,
+  `DELETE FROM lote_guias WHERE "loteId" IN (SELECT id FROM lotes_convenio WHERE "clinicaId" = $1)`,
+  `DELETE FROM parcelas_cobranca WHERE "cobrancaId" IN (SELECT id FROM cobrancas WHERE "clinicaId" = $1)`,
+  `DELETE FROM cobrancas WHERE "clinicaId" = $1`,
+  `DELETE FROM lotes_convenio WHERE "clinicaId" = $1`,
+  `DELETE FROM despesas WHERE "clinicaId" = $1`,
+  `DELETE FROM formas_pagamento WHERE "clinicaId" = $1`,
+  `DELETE FROM documentos_paciente WHERE "clinicaId" = $1`,
+  `DELETE FROM logs_acesso_prontuario WHERE "clinicaId" = $1`,
+  `DELETE FROM atendimentos WHERE "clinicaId" = $1`,
+  `DELETE FROM acompanhamentos_clinicos WHERE "clinicaId" = $1`,
+  `DELETE FROM lista_espera WHERE "clinicaId" = $1`,
+  `DELETE FROM bloqueios_agenda WHERE "clinicaId" = $1`,
+  `DELETE FROM agendamentos WHERE "clinicaId" = $1`,
+  `DELETE FROM pacientes WHERE "clinicaId" = $1`,
+  `DELETE FROM profissional_horarios WHERE "profissionalId" IN (SELECT id FROM profissionais WHERE "clinicaId" = $1)`,
+  `DELETE FROM profissional_procedimentos WHERE "profissionalId" IN (SELECT id FROM profissionais WHERE "clinicaId" = $1)`,
+  `DELETE FROM profissionais WHERE "clinicaId" = $1`,
+  `DELETE FROM convenio_procedimentos WHERE "convenioId" IN (SELECT id FROM convenios WHERE "clinicaId" = $1)`,
+  `DELETE FROM convenios WHERE "clinicaId" = $1`,
+  `DELETE FROM procedimentos WHERE "clinicaId" = $1`,
+  `DELETE FROM usuarios_unidades WHERE "usuarioId" IN (SELECT id FROM usuarios WHERE "clinicaId" = $1)`,
+  `DELETE FROM usuarios WHERE "clinicaId" = $1`,
+  `DELETE FROM perfis_acesso WHERE "clinicaId" = $1`,
+  `DELETE FROM unidades WHERE "clinicaId" = $1`,
+  `DELETE FROM clinicas WHERE id = $1`,
+];
+
+export async function excluirClinica(clinicaId: string) {
+  await comSistema(async (db) => {
+    let apagouClinica = 0;
+    for (const sql of APAGAR_CLINICA) {
+      const resultado = await db.query(sql, [clinicaId]);
+      if (sql.startsWith("DELETE FROM clinicas")) apagouClinica = resultado.rowCount ?? 0;
+    }
+    if (apagouClinica !== 1) throw new Error("Clínica não encontrada.");
   });
 }
 

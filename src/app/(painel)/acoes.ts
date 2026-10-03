@@ -2,19 +2,61 @@
 
 import { redirect } from "next/navigation";
 
-import { abrirClinica, definirLoginInicial, definirPlano } from "@/lib/clinicas";
+import {
+  abrirClinica,
+  definirCobranca,
+  definirLoginInicial,
+  definirPlano,
+  definirStatusClinica,
+  excluirClinica as apagarClinica,
+} from "@/lib/clinicas";
 import { exigirSessao } from "@/lib/sessao";
 
 function texto(formData: FormData, campo: string) {
   return String(formData.get(campo) ?? "").trim();
 }
 
+function bruto(formData: FormData, campo: string) {
+  return String(formData.get(campo) ?? "");
+}
+
+export type EstadoNovaClinica = {
+  id: number;
+  erro?: string;
+  valores: {
+    plano: string;
+    adminNome: string;
+    adminEmail: string;
+    adminSenha: string;
+    nomeFantasia: string;
+    razaoSocial: string;
+    cnpj: string;
+    telefone: string;
+    emailClinica: string;
+    unidadeNome: string;
+    unidadeCidade: string;
+  };
+};
+
 function digitos(valor: string) {
   return valor.replace(/\D/g, "");
 }
 
-export async function criarClinica(formData: FormData) {
+export async function criarClinica(estado: EstadoNovaClinica, formData: FormData): Promise<EstadoNovaClinica> {
   await exigirSessao();
+  const valores = {
+    plano: bruto(formData, "plano"),
+    adminNome: bruto(formData, "adminNome"),
+    adminEmail: bruto(formData, "adminEmail"),
+    adminSenha: bruto(formData, "adminSenha"),
+    nomeFantasia: bruto(formData, "nomeFantasia"),
+    razaoSocial: bruto(formData, "razaoSocial"),
+    cnpj: bruto(formData, "cnpj"),
+    telefone: bruto(formData, "telefone"),
+    emailClinica: bruto(formData, "emailClinica"),
+    unidadeNome: bruto(formData, "unidadeNome"),
+    unidadeCidade: bruto(formData, "unidadeCidade"),
+  };
   try {
     await abrirClinica({
       plano: texto(formData, "plano"),
@@ -37,7 +79,7 @@ export async function criarClinica(formData: FormData) {
     });
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : "Não foi possível abrir a clínica.";
-    redirect(`/clinicas/nova?erro=${encodeURIComponent(mensagem)}`);
+    return { id: estado.id + 1, erro: mensagem, valores };
   }
   redirect("/clinicas?ok=criada");
 }
@@ -64,4 +106,56 @@ export async function salvarLogin(formData: FormData) {
     redirect(`/clinicas/${id}?erro=${encodeURIComponent(mensagem)}`);
   }
   redirect(`/clinicas/${id}?ok=login`);
+}
+
+function voltarClinicas(ok: string) {
+  redirect(`/clinicas?ok=${ok}`);
+}
+
+export async function desativarClinica(formData: FormData) {
+  await exigirSessao();
+  const id = texto(formData, "clinicaId");
+  try {
+    await definirStatusClinica(id, "desativada");
+  } catch (erro) {
+    const mensagem = erro instanceof Error ? erro.message : "Não foi possível desativar a clínica.";
+    redirect(`/clinicas?erro=${encodeURIComponent(mensagem)}`);
+  }
+  voltarClinicas("desativada");
+}
+
+export async function ativarClinica(formData: FormData) {
+  await exigirSessao();
+  const id = texto(formData, "clinicaId");
+  try {
+    await definirStatusClinica(id, "ativa");
+  } catch (erro) {
+    const mensagem = erro instanceof Error ? erro.message : "Não foi possível ativar a clínica.";
+    redirect(`/clinicas?erro=${encodeURIComponent(mensagem)}`);
+  }
+  voltarClinicas("ativada");
+}
+
+export async function excluirClinica(formData: FormData) {
+  await exigirSessao();
+  const id = texto(formData, "clinicaId");
+  try {
+    await apagarClinica(id);
+  } catch (erro) {
+    const mensagem = erro instanceof Error ? erro.message : "Não foi possível excluir a clínica.";
+    redirect(`/clinicas?erro=${encodeURIComponent(mensagem)}`);
+  }
+  voltarClinicas("excluida");
+}
+
+export async function salvarCobranca(formData: FormData) {
+  await exigirSessao();
+  const id = texto(formData, "clinicaId");
+  try {
+    await definirCobranca(id, texto(formData, "valor"), texto(formData, "situacao"));
+  } catch (erro) {
+    const mensagem = erro instanceof Error ? erro.message : "Não foi possível salvar a cobrança.";
+    redirect(`/clinicas?erro=${encodeURIComponent(mensagem)}`);
+  }
+  voltarClinicas("cobranca");
 }

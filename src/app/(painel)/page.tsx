@@ -28,11 +28,13 @@ export default async function FinanceiroPage() {
         Recebimentos e despesas de todas as clínicas. O resultado do mês é o que entrou menos o que foi pago.
       </p>
 
-      <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <Cartao titulo="Recebido no mês" valor={reais(resumo.recebido)} detalhe="Cobranças pagas" />
         <Cartao titulo="A receber" valor={reais(resumo.aReceber)} detalhe="Cobranças pendentes" />
         <Cartao titulo="Despesas pagas" valor={reais(resumo.despesasPagas)} detalhe="Pagas neste mês" />
         <Cartao titulo="Resultado do mês" valor={reais(resumo.resultado)} detalhe={`${reais(resumo.aPagar)} ainda a pagar`} />
+        <Cartao titulo="Mensalidades em dia" valor={reais(resumo.mensalidadesEmDia)} detalhe={`${reais(resumo.mensalidades)} contratadas`} />
+        <Cartao titulo="Mensalidades em aberto" valor={reais(resumo.mensalidadesEmAberto)} detalhe="Pendentes e atrasadas" />
       </section>
 
       <section className="mt-8 overflow-hidden rounded-2xl border border-line bg-card">
@@ -55,6 +57,7 @@ export default async function FinanceiroPage() {
                   <th className="px-5 py-3 font-medium">A receber</th>
                   <th className="px-5 py-3 font-medium">Despesas pagas</th>
                   <th className="px-5 py-3 font-medium">Resultado</th>
+                  <th className="px-5 py-3 font-medium">Mensalidade</th>
                 </tr>
               </thead>
               <tbody>
@@ -72,6 +75,12 @@ export default async function FinanceiroPage() {
                       <td className="px-5 py-3">{reais(linha.aReceber)}</td>
                       <td className="px-5 py-3">{reais(linha.despesasPagas)}</td>
                       <td className="px-5 py-3">{reais(resultado)}</td>
+                      <td className="px-5 py-3">
+                        {reais(linha.valorMensal)}
+                        <span className="mt-1 block text-xs text-muted">
+                          {linha.situacaoCobranca === "em_dia" ? "Em dia" : linha.situacaoCobranca === "atrasada" ? "Atrasada" : "Pendente"}
+                        </span>
+                      </td>
                     </tr>
                   );
                 })}

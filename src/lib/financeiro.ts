@@ -9,6 +9,8 @@ export interface LinhaFinanceira {
   aReceber: string;
   despesasPagas: string;
   aPagar: string;
+  valorMensal: string;
+  situacaoCobranca: string;
 }
 
 export interface ResumoFinanceiro {
@@ -18,6 +20,9 @@ export interface ResumoFinanceiro {
   despesasPagas: number;
   aPagar: number;
   resultado: number;
+  mensalidades: number;
+  mensalidadesEmDia: number;
+  mensalidadesEmAberto: number;
   linhas: LinhaFinanceira[];
 }
 
@@ -34,7 +39,9 @@ export async function resumoFinanceiro(): Promise<ResumoFinanceiro> {
         COALESCE(r.recebido, 0)::text AS recebido,
         COALESCE(r.a_receber, 0)::text AS "aReceber",
         COALESCE(d.pagas, 0)::text AS "despesasPagas",
-        COALESCE(d.a_pagar, 0)::text AS "aPagar"
+        COALESCE(d.a_pagar, 0)::text AS "aPagar",
+        c."valorMensal"::text AS "valorMensal",
+        c."situacaoCobranca"
       FROM clinicas c
       JOIN planos p ON p.id = c."planoId"
       LEFT JOIN (
@@ -69,6 +76,11 @@ export async function resumoFinanceiro(): Promise<ResumoFinanceiro> {
 
   const recebido = somar("recebido");
   const despesasPagas = somar("despesasPagas");
+  const mensalidadesEmDia = linhas.reduce(
+    (total, linha) => total + (linha.situacaoCobranca === "em_dia" ? Number(linha.valorMensal) || 0 : 0),
+    0,
+  );
+  const mensalidades = linhas.reduce((total, linha) => total + (Number(linha.valorMensal) || 0), 0);
 
   return {
     rotulo: periodo.rotulo,
@@ -77,6 +89,9 @@ export async function resumoFinanceiro(): Promise<ResumoFinanceiro> {
     despesasPagas,
     aPagar: somar("aPagar"),
     resultado: recebido - despesasPagas,
+    mensalidades,
+    mensalidadesEmDia,
+    mensalidadesEmAberto: mensalidades - mensalidadesEmDia,
     linhas,
   };
 }
