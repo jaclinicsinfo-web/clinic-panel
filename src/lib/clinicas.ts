@@ -158,6 +158,32 @@ export function lerValorMensal(valor: string) {
   return numero.toFixed(2);
 }
 
+export async function definirConta(clinicaId: string, codigo: string, valor: string, situacao: string) {
+  if (!PLANOS.some((plano) => plano.codigo === codigo)) {
+    throw new Error("Plano inválido.");
+  }
+  if (!SITUACOES.includes(situacao as (typeof SITUACOES)[number])) {
+    throw new Error("Situação da cobrança inválida.");
+  }
+  const mensalidade = lerValorMensal(valor);
+
+  await comSistema(async (db) => {
+    const atualizado = await db.query(
+      `
+      UPDATE clinicas
+      SET "planoId" = (SELECT id FROM planos WHERE codigo = $2 AND ativo = true),
+          "valorMensal" = $3,
+          "situacaoCobranca" = $4,
+          "atualizadoEm" = now()
+      WHERE id = $1
+        AND EXISTS (SELECT 1 FROM planos WHERE codigo = $2 AND ativo = true)
+      `,
+      [clinicaId, codigo, mensalidade, situacao],
+    );
+    if (atualizado.rowCount !== 1) throw new Error("Não foi possível atualizar a clínica.");
+  });
+}
+
 export async function definirCobranca(clinicaId: string, valor: string, situacao: string) {
   if (!SITUACOES.includes(situacao as (typeof SITUACOES)[number])) {
     throw new Error("Situação da cobrança inválida.");

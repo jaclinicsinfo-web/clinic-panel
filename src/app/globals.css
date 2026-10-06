@@ -18,3 +18,16 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
+
+button:not(:disabled),
+[type="button"]:not(:disabled),
+[type="submit"]:not(:disabled),
+summary,
+label:has(input[type="radio"]),
+label:has(input[type="checkbox"]) {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}

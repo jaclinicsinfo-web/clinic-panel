@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import {
   abrirClinica,
   definirCobranca,
+  definirConta,
   definirLoginInicial,
   definirPlano,
   definirStatusClinica,
@@ -87,13 +88,18 @@ export async function criarClinica(estado: EstadoNovaClinica, formData: FormData
 export async function salvarPlano(formData: FormData) {
   await exigirSessao();
   const id = texto(formData, "clinicaId");
+  const naLista = texto(formData, "origem") === "lista";
   try {
     await definirPlano(id, texto(formData, "plano"));
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : "Não foi possível trocar o plano.";
-    redirect(`/clinicas/${id}?erro=${encodeURIComponent(mensagem)}`);
+    redirect(
+      naLista
+        ? `/clinicas?erro=${encodeURIComponent(mensagem)}`
+        : `/clinicas/${id}?erro=${encodeURIComponent(mensagem)}`,
+    );
   }
-  redirect(`/clinicas/${id}?ok=plano`);
+  redirect(naLista ? "/clinicas?ok=plano" : `/clinicas/${id}?ok=plano`);
 }
 
 export async function salvarLogin(formData: FormData) {
@@ -146,6 +152,18 @@ export async function excluirClinica(formData: FormData) {
     redirect(`/clinicas?erro=${encodeURIComponent(mensagem)}`);
   }
   voltarClinicas("excluida");
+}
+
+export async function salvarConta(formData: FormData) {
+  await exigirSessao();
+  const id = texto(formData, "clinicaId");
+  try {
+    await definirConta(id, texto(formData, "plano"), texto(formData, "valor"), texto(formData, "situacao"));
+  } catch (erro) {
+    const mensagem = erro instanceof Error ? erro.message : "Não foi possível atualizar a clínica.";
+    redirect(`/clinicas?erro=${encodeURIComponent(mensagem)}`);
+  }
+  voltarClinicas("conta");
 }
 
 export async function salvarCobranca(formData: FormData) {
