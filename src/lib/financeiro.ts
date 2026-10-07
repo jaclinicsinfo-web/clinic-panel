@@ -11,6 +11,8 @@ export interface LinhaFinanceira {
   aPagar: string;
   valorMensal: string;
   situacaoCobranca: string;
+  tipoAcesso: string;
+  trialExpiraEm: string | null;
 }
 
 export interface ResumoFinanceiro {
@@ -41,7 +43,9 @@ export async function resumoFinanceiro(): Promise<ResumoFinanceiro> {
         COALESCE(d.pagas, 0)::text AS "despesasPagas",
         COALESCE(d.a_pagar, 0)::text AS "aPagar",
         c."valorMensal"::text AS "valorMensal",
-        c."situacaoCobranca"
+        c."situacaoCobranca",
+        c."tipoAcesso",
+        c."trialExpiraEm"
       FROM clinicas c
       JOIN planos p ON p.id = c."planoId"
       LEFT JOIN (
@@ -68,7 +72,10 @@ export async function resumoFinanceiro(): Promise<ResumoFinanceiro> {
       `,
       [periodo.inicio, periodo.fim],
     );
-    return resultado.rows;
+    return resultado.rows.map((linha) => ({
+      ...linha,
+      trialExpiraEm: linha.trialExpiraEm ? new Date(linha.trialExpiraEm).toISOString() : null,
+    }));
   });
 
   const somar = (campo: keyof Pick<LinhaFinanceira, "recebido" | "aReceber" | "despesasPagas" | "aPagar">) =>

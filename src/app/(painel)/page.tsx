@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { reais } from "@/lib/dinheiro";
+import { rotuloAcesso } from "@/lib/acesso";
 import { resumoFinanceiro } from "@/lib/financeiro";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +64,7 @@ export default async function FinanceiroPage() {
               <tbody>
                 {resumo.linhas.map((linha) => {
                   const resultado = Number(linha.recebido) - Number(linha.despesasPagas);
+                  const acesso = rotuloAcesso(linha.tipoAcesso, linha.trialExpiraEm);
                   return (
                     <tr key={linha.id} className="border-t border-line">
                       <td className="px-5 py-3">
@@ -70,7 +72,12 @@ export default async function FinanceiroPage() {
                           {linha.nomeFantasia}
                         </Link>
                       </td>
-                      <td className="px-5 py-3">{linha.planoNome}</td>
+                      <td className="px-5 py-3">
+                        {linha.planoNome}
+                        <span className={`mt-1 flex w-fit rounded-full px-2 py-0.5 text-xs font-medium ${acesso.classe}`}>
+                          {acesso.texto}
+                        </span>
+                      </td>
                       <td className="px-5 py-3">{reais(linha.recebido)}</td>
                       <td className="px-5 py-3">{reais(linha.aReceber)}</td>
                       <td className="px-5 py-3">{reais(linha.despesasPagas)}</td>

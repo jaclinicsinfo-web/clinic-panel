@@ -22,6 +22,8 @@ export interface ClinicaResumo {
   status: string;
   valorMensal: string;
   situacaoCobranca: string;
+  tipoAcesso: string;
+  trialExpiraEm: string | null;
 }
 
 export interface AdministradorClinica {
@@ -55,7 +57,9 @@ export async function listarClinicas(): Promise<ClinicaResumo[]> {
         adm.email AS "adminEmail",
         c.status,
         c."valorMensal"::text AS "valorMensal",
-        c."situacaoCobranca"
+        c."situacaoCobranca",
+        c."tipoAcesso",
+        c."trialExpiraEm"
       FROM clinicas c
       JOIN planos p ON p.id = c."planoId"
       LEFT JOIN LATERAL (
@@ -68,7 +72,10 @@ export async function listarClinicas(): Promise<ClinicaResumo[]> {
       ) adm ON true
       ORDER BY c."nomeFantasia" ASC
     `);
-    return resultado.rows;
+    return resultado.rows.map((clinica) => ({
+      ...clinica,
+      trialExpiraEm: clinica.trialExpiraEm ? new Date(clinica.trialExpiraEm).toISOString() : null,
+    }));
   });
 }
 
@@ -174,6 +181,8 @@ export async function definirConta(clinicaId: string, codigo: string, valor: str
       SET "planoId" = (SELECT id FROM planos WHERE codigo = $2 AND ativo = true),
           "valorMensal" = $3,
           "situacaoCobranca" = $4,
+          "tipoAcesso" = 'pago',
+          "trialExpiraEm" = NULL,
           "atualizadoEm" = now()
       WHERE id = $1
         AND EXISTS (SELECT 1 FROM planos WHERE codigo = $2 AND ativo = true)

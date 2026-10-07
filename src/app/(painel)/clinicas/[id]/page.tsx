@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { salvarLogin, salvarPlano } from "@/app/(painel)/acoes";
 import { Aviso, Campo } from "@/components/campo";
 import { buscarClinica, catalogoPlanos } from "@/lib/clinicas";
+import { rotuloAcesso } from "@/lib/acesso";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Clínica" };
@@ -28,6 +29,13 @@ export default async function ClinicaPage({
       </Link>
       <h1 className="mt-3 text-3xl font-semibold">{clinica.nomeFantasia}</h1>
       <p className="mt-1 text-sm text-muted">{clinica.razaoSocial}</p>
+      <p className="mt-3">
+        <span
+          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${rotuloAcesso(clinica.tipoAcesso, clinica.trialExpiraEm).classe}`}
+        >
+          {clinica.planoNome} · {rotuloAcesso(clinica.tipoAcesso, clinica.trialExpiraEm).texto}
+        </span>
+      </p>
       <div className="mt-4">
         <Aviso erro={avisos.erro} ok={avisos.ok} />
       </div>

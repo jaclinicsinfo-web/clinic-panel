@@ -24,6 +24,7 @@ export interface ClinicaAcao {
   valorMensal: string;
   situacaoCobranca: string;
   status: string;
+  tipoAcesso: string;
 }
 
 function mensalidadeCampo(valor: string) {
@@ -64,7 +65,11 @@ export function AcoesClinica({ clinica, planos }: { clinica: ClinicaAcao; planos
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">Conta</p>
               <h2 className="mt-1 text-lg font-semibold">{clinica.nomeFantasia}</h2>
-              <p className="mt-1 text-sm text-muted">Altere o plano e a mensalidade. O plano entra no próximo login.</p>
+              <p className="mt-1 text-sm text-muted">
+                {clinica.tipoAcesso === "gratuito"
+                  ? "Salvar transforma o acesso gratuito em assinatura paga."
+                  : "Altere o plano e a mensalidade. O plano entra no próximo login."}
+              </p>
             </div>
             <button type="button" onClick={fechar} className="rounded-lg px-2 py-1 text-sm text-muted hover:bg-paper" aria-label="Fechar">
               Fechar
