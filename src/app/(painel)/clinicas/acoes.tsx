@@ -21,19 +21,15 @@ export interface ClinicaAcao {
   id: string;
   nomeFantasia: string;
   planoCodigo: string;
-  valorMensal: string;
   situacaoCobranca: string;
   status: string;
   tipoAcesso: string;
 }
 
-function mensalidadeCampo(valor: string) {
-  return Number(valor || 0).toFixed(2).replace(".", ",");
-}
-
 export function AcoesClinica({ clinica, planos }: { clinica: ClinicaAcao; planos: Plano[] }) {
   const dialogRef = React.useRef<HTMLDialogElement>(null);
   const ativa = clinica.status !== "desativada";
+  const formId = `conta-${clinica.id}`;
 
   function abrir() {
     dialogRef.current?.showModal();
@@ -55,24 +51,31 @@ export function AcoesClinica({ clinica, planos }: { clinica: ClinicaAcao; planos
 
       <dialog
         ref={dialogRef}
-        className="m-auto max-h-[calc(100%-2rem)] w-[min(100%-2rem,34rem)] overflow-y-auto rounded-2xl border border-line bg-card p-0 text-ink shadow-xl backdrop:bg-ink/45"
+        className="m-auto max-h-[calc(100%-2rem)] w-[min(100%-2rem,32rem)] overflow-y-auto rounded-2xl border border-line bg-card p-0 text-ink shadow-xl backdrop:bg-ink/45"
         onClick={(evento) => {
           if (evento.target === dialogRef.current) fechar();
         }}
       >
-        <form action={salvarConta}>
+        <form id={formId} action={salvarConta}>
           <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">Conta</p>
               <h2 className="mt-1 text-lg font-semibold">{clinica.nomeFantasia}</h2>
               <p className="mt-1 text-sm text-muted">
                 {clinica.tipoAcesso === "gratuito"
-                  ? "Salvar transforma o acesso gratuito em assinatura paga."
-                  : "Altere o plano e a mensalidade. O plano entra no próximo login."}
+                  ? "Salvar transforma o acesso gratuito em assinatura paga. O plano entra no próximo login."
+                  : "Altere o plano e a situação da cobrança. O plano entra no próximo login."}
               </p>
             </div>
-            <button type="button" onClick={fechar} className="rounded-lg px-2 py-1 text-sm text-muted hover:bg-paper" aria-label="Fechar">
-              Fechar
+            <button
+              type="button"
+              onClick={fechar}
+              className="rounded-lg p-1.5 text-muted hover:bg-paper"
+              aria-label="Fechar"
+            >
+              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <path d="M5 5l10 10M15 5L5 15" />
+              </svg>
             </button>
           </div>
 
@@ -105,59 +108,36 @@ export function AcoesClinica({ clinica, planos }: { clinica: ClinicaAcao; planos
               </div>
             </fieldset>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm">
-                <span className="font-medium">Mensalidade</span>
-                <span className="mt-1 flex overflow-hidden rounded-lg border border-line focus-within:border-brand">
-                  <span className="bg-paper px-3 py-2 text-muted">R$</span>
-                  <input
-                    name="valor"
-                    inputMode="decimal"
-                    defaultValue={mensalidadeCampo(clinica.valorMensal)}
-                    aria-label={`Mensalidade de ${clinica.nomeFantasia}`}
-                    className="w-full bg-white px-3 py-2 outline-none"
-                  />
-                </span>
-              </label>
-
-              <fieldset>
-                <legend className="text-sm font-medium">Situação</legend>
-                <div className="mt-1 grid grid-cols-3 gap-1 rounded-lg border border-line p-1">
-                  {situacoes.map((item) => (
-                    <label key={item.valor} className="cursor-pointer">
-                      <input
-                        type="radio"
-                        name="situacao"
-                        value={item.valor}
-                        defaultChecked={item.valor === clinica.situacaoCobranca}
-                        className="peer sr-only"
-                      />
-                      <span className="block rounded-md px-2 py-2 text-center text-xs font-medium text-muted peer-checked:bg-ink peer-checked:text-white">
-                        {item.rotulo}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 border-t border-line px-5 py-4">
-            <button type="button" onClick={fechar} className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-paper">
-              Cancelar
-            </button>
-            <button type="submit" className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-strong">
-              Salvar alterações
-            </button>
+            <fieldset>
+              <legend className="text-sm font-medium">Situação</legend>
+              <div className="mt-2 grid grid-cols-3 gap-1 rounded-lg border border-line p-1">
+                {situacoes.map((item) => (
+                  <label key={item.valor} className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="situacao"
+                      value={item.valor}
+                      defaultChecked={item.valor === clinica.situacaoCobranca}
+                      className="peer sr-only"
+                    />
+                    <span className="block rounded-md px-2 py-2 text-center text-sm font-medium text-muted peer-checked:bg-ink peer-checked:text-white">
+                      {item.rotulo}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           </div>
         </form>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-paper px-5 py-3">
-          <p className="text-xs text-muted">Acesso da clínica</p>
+        <div className="flex flex-col gap-3 border-t border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-2">
             <form action={ativa ? desativarClinica : ativarClinica}>
               <input type="hidden" name="clinicaId" value={clinica.id} />
-              <button type="submit" className="rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-medium hover:border-brand">
+              <button
+                type="submit"
+                className="rounded-lg border border-line bg-white px-3 py-2 text-sm font-medium hover:border-brand"
+              >
                 {ativa ? "Desativar" : "Ativar"}
               </button>
             </form>
@@ -170,10 +150,25 @@ export function AcoesClinica({ clinica, planos }: { clinica: ClinicaAcao; planos
               }}
             >
               <input type="hidden" name="clinicaId" value={clinica.id} />
-              <button type="submit" className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-medium text-danger hover:bg-rose-50">
+              <button
+                type="submit"
+                className="rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-medium text-danger hover:bg-rose-50"
+              >
                 Excluir
               </button>
             </form>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={fechar} className="rounded-lg px-4 py-2 text-sm font-medium text-muted hover:bg-paper">
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form={formId}
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-strong"
+            >
+              Salvar
+            </button>
           </div>
         </div>
       </dialog>

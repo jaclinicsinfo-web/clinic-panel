@@ -159,7 +159,7 @@ export async function salvarConta(formData: FormData) {
   await exigirSessao();
   const id = texto(formData, "clinicaId");
   try {
-    await definirConta(id, texto(formData, "plano"), texto(formData, "valor"), texto(formData, "situacao"));
+    await definirConta(id, texto(formData, "plano"), texto(formData, "situacao"));
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : "Não foi possível atualizar a clínica.";
     redirect(`/clinicas?erro=${encodeURIComponent(mensagem)}`);

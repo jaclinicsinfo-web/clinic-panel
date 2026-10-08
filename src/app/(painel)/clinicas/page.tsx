@@ -4,7 +4,6 @@ import { AcoesClinica } from "@/app/(painel)/clinicas/acoes";
 import { Aviso } from "@/components/campo";
 import { rotuloAcesso } from "@/lib/acesso";
 import { catalogoPlanos, listarClinicas } from "@/lib/clinicas";
-import { reais } from "@/lib/dinheiro";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Clínicas" };
@@ -43,7 +42,7 @@ export default async function ClinicasPage({
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Contas</p>
           <h1 className="mt-1 text-3xl font-semibold">Clínicas</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted">
-            Aparecem as clínicas abertas aqui, as que pagaram um plano e as que estão no teste de 7 dias. Use Ações para mudar o plano e a mensalidade.
+            Aparecem as clínicas abertas aqui, as que pagaram um plano e as que estão no teste de 7 dias. Use Ações para mudar o plano e a situação da cobrança.
           </p>
         </div>
         <Link href="/clinicas/nova" className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-strong">
@@ -60,7 +59,7 @@ export default async function ClinicasPage({
           <p className="px-5 py-8 text-sm text-muted">Nenhuma clínica cadastrada.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[920px] text-left text-sm">
+            <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="bg-paper text-muted">
                 <tr>
                   <th className="px-5 py-3 font-medium">Clínica</th>
@@ -68,7 +67,6 @@ export default async function ClinicasPage({
                   <th className="px-5 py-3 font-medium">Plano</th>
                   <th className="px-5 py-3 font-medium">Acesso</th>
                   <th className="px-5 py-3 font-medium">Login inicial</th>
-                  <th className="px-5 py-3 font-medium">Mensalidade</th>
                   <th className="px-5 py-3 font-medium">Situação</th>
                   <th className="px-5 py-3 font-medium">Ações</th>
                 </tr>
@@ -86,7 +84,12 @@ export default async function ClinicasPage({
                         {ativa ? null : <p className="mt-1 text-xs font-medium text-danger">Desativada</p>}
                       </td>
                       <td className="px-5 py-3">{cnpj(clinica.cnpj)}</td>
-                      <td className="px-5 py-3 font-medium">{clinica.planoNome}</td>
+                      <td className="px-5 py-3">
+                        <span className="font-medium">{clinica.planoNome}</span>
+                        {clinica.cicloCobranca === "anual" ? (
+                          <span className="mt-1 block text-xs text-muted">Anual à vista</span>
+                        ) : null}
+                      </td>
                       <td className="px-5 py-3">
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${acesso.classe}`}
@@ -95,12 +98,6 @@ export default async function ClinicasPage({
                         </span>
                       </td>
                       <td className="px-5 py-3">{clinica.adminEmail ?? "Sem administrador"}</td>
-                      <td className="px-5 py-3">
-                        {reais(clinica.valorMensal)}
-                        {clinica.cicloCobranca === "anual" ? (
-                          <span className="mt-1 block text-xs text-muted">Anual à vista</span>
-                        ) : null}
-                      </td>
                       <td className="px-5 py-3">
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${classeSituacao[clinica.situacaoCobranca] ?? "bg-paper text-muted"}`}
@@ -114,7 +111,6 @@ export default async function ClinicasPage({
                             id: clinica.id,
                             nomeFantasia: clinica.nomeFantasia,
                             planoCodigo: clinica.planoCodigo,
-                            valorMensal: clinica.valorMensal,
                             situacaoCobranca: clinica.situacaoCobranca,
                             status: clinica.status,
                             tipoAcesso: clinica.tipoAcesso,
