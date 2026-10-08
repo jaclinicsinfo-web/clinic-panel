@@ -6,6 +6,8 @@ import { exigirSessao } from "@/lib/sessao";
 const links = [
   { href: "/", rotulo: "Financeiro" },
   { href: "/clinicas", rotulo: "Clínicas" },
+  { href: "/planos", rotulo: "Planos" },
+  { href: "/leads", rotulo: "Leads" },
 ];
 
 export default async function PainelLayout({ children }: { children: React.ReactNode }) {

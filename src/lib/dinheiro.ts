@@ -1,3 +1,13 @@
+/** Máscara de dinheiro: os dois últimos dígitos são os centavos. 14900 vira 149,00. */
+export function mascararDinheiro(valor: string) {
+  const digitos = valor.replace(/\D/g, "").slice(0, 8);
+  const preenchido = digitos.padStart(3, "0");
+  const centavos = preenchido.slice(-2);
+  const inteiro = preenchido.slice(0, -2).replace(/^0+(?=\d)/, "") || "0";
+  const milhar = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${milhar},${centavos}`;
+}
+
 export function reais(valor: string | number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(valor) || 0);
 }

@@ -23,6 +23,7 @@ export interface ClinicaResumo {
   valorMensal: string;
   situacaoCobranca: string;
   tipoAcesso: string;
+  cicloCobranca: string;
   trialExpiraEm: string | null;
 }
 
@@ -59,6 +60,7 @@ export async function listarClinicas(): Promise<ClinicaResumo[]> {
         c."valorMensal"::text AS "valorMensal",
         c."situacaoCobranca",
         c."tipoAcesso",
+        c."cicloCobranca",
         c."trialExpiraEm"
       FROM clinicas c
       JOIN planos p ON p.id = c."planoId"

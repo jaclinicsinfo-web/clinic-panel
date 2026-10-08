@@ -37,5 +37,6 @@ export function Aviso({ erro, ok }: { erro?: string; ok?: string }) {
   if (ok === "ativada") return <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">Clínica ativada. Os usuários voltam a entrar.</p>;
   if (ok === "excluida") return <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">Clínica excluída. O login dela passa a dizer que o usuário não existe.</p>;
   if (ok === "cobranca" || ok === "conta") return <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">Plano e mensalidade atualizados. O plano vale no próximo login da clínica.</p>;
+  if (ok === "precos") return <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">Preços atualizados. A landing e o próximo pagamento já usam esses valores.</p>;
   return null;
 }

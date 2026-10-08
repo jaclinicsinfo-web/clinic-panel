@@ -11,6 +11,7 @@ import {
   definirStatusClinica,
   excluirClinica as apagarClinica,
 } from "@/lib/clinicas";
+import { definirPrecosPlanos } from "@/lib/planos";
 import { exigirSessao } from "@/lib/sessao";
 
 function texto(formData: FormData, campo: string) {
@@ -164,6 +165,21 @@ export async function salvarConta(formData: FormData) {
     redirect(`/clinicas?erro=${encodeURIComponent(mensagem)}`);
   }
   voltarClinicas("conta");
+}
+
+export async function salvarPrecosPlanos(formData: FormData) {
+  await exigirSessao();
+  try {
+    await definirPrecosPlanos({
+      essencial: { mensal: texto(formData, "preco_essencial"), anual: texto(formData, "anual_essencial") },
+      profissional: { mensal: texto(formData, "preco_profissional"), anual: texto(formData, "anual_profissional") },
+      ilimitado: { mensal: texto(formData, "preco_ilimitado"), anual: texto(formData, "anual_ilimitado") },
+    });
+  } catch (erro) {
+    const mensagem = erro instanceof Error ? erro.message : "Não foi possível salvar os preços.";
+    redirect(`/planos?erro=${encodeURIComponent(mensagem)}`);
+  }
+  redirect("/planos?ok=precos");
 }
 
 export async function salvarCobranca(formData: FormData) {

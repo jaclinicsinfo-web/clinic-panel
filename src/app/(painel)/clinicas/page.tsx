@@ -43,7 +43,7 @@ export default async function ClinicasPage({
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Contas</p>
           <h1 className="mt-1 text-3xl font-semibold">Clínicas</h1>
           <p className="mt-2 max-w-2xl text-sm text-muted">
-            Cada clínica mostra se o acesso é pago ou gratuito. Use Ações para mudar o plano e a mensalidade.
+            Aparecem as clínicas abertas aqui, as que pagaram um plano e as que estão no teste de 7 dias. Use Ações para mudar o plano e a mensalidade.
           </p>
         </div>
         <Link href="/clinicas/nova" className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-strong">
@@ -95,7 +95,12 @@ export default async function ClinicasPage({
                         </span>
                       </td>
                       <td className="px-5 py-3">{clinica.adminEmail ?? "Sem administrador"}</td>
-                      <td className="px-5 py-3">{reais(clinica.valorMensal)}</td>
+                      <td className="px-5 py-3">
+                        {reais(clinica.valorMensal)}
+                        {clinica.cicloCobranca === "anual" ? (
+                          <span className="mt-1 block text-xs text-muted">Anual à vista</span>
+                        ) : null}
+                      </td>
                       <td className="px-5 py-3">
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${classeSituacao[clinica.situacaoCobranca] ?? "bg-paper text-muted"}`}

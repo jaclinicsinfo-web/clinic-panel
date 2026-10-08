@@ -34,6 +34,7 @@ export default async function ClinicaPage({
           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${rotuloAcesso(clinica.tipoAcesso, clinica.trialExpiraEm).classe}`}
         >
           {clinica.planoNome} · {rotuloAcesso(clinica.tipoAcesso, clinica.trialExpiraEm).texto}
+          {clinica.cicloCobranca === "anual" ? " · Anual à vista" : ""}
         </span>
       </p>
       <div className="mt-4">
