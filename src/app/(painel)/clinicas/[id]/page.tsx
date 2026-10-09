@@ -43,7 +43,9 @@ export default async function ClinicaPage({
 
       <form action={salvarPlano} className="mt-6 rounded-2xl border border-line bg-card p-5">
         <h2 className="font-semibold">Plano em uso</h2>
-        <p className="mt-1 text-sm text-muted">A clínica passa a ver os módulos deste plano no próximo login.</p>
+        <p className="mt-1 text-sm text-muted">
+          A clínica passa a ver os módulos deste plano no próximo login. O prazo do teste, se houver, continua o mesmo.
+        </p>
         <input type="hidden" name="clinicaId" value={clinica.id} />
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
           {planos.map((plano) => (

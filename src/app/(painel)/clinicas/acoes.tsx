@@ -63,7 +63,7 @@ export function AcoesClinica({ clinica, planos }: { clinica: ClinicaAcao; planos
               <h2 className="mt-1 text-lg font-semibold">{clinica.nomeFantasia}</h2>
               <p className="mt-1 text-sm text-muted">
                 {clinica.tipoAcesso === "gratuito"
-                  ? "Salvar transforma o acesso gratuito em assinatura paga. O plano entra no próximo login."
+                  ? "A troca de plano mantém o prazo do teste. O plano entra no próximo login."
                   : "Altere o plano e a situação da cobrança. O plano entra no próximo login."}
               </p>
             </div>

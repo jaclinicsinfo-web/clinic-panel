@@ -12,6 +12,8 @@ export function rotuloAcesso(tipoAcesso: string, trialExpiraEm: string | null) {
     dateStyle: "short",
     timeZone: "America/Sao_Paulo",
   }).format(expira);
+  const dias = Math.ceil((expira.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+  const prazo = dias === 1 ? "1 dia" : `${dias} dias`;
 
-  return { texto: `Gratuito até ${data}`, classe: "bg-amber-50 text-amber-800" };
+  return { texto: `Gratuito · ${prazo} (até ${data})`, classe: "bg-amber-50 text-amber-800" };
 }

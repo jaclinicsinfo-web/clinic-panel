@@ -181,8 +181,6 @@ export async function definirConta(clinicaId: string, codigo: string, situacao: 
       UPDATE clinicas
       SET "planoId" = (SELECT id FROM planos WHERE codigo = $2 AND ativo = true),
           "situacaoCobranca" = $3,
-          "tipoAcesso" = 'pago',
-          "trialExpiraEm" = NULL,
           "atualizadoEm" = now()
       WHERE id = $1
         AND EXISTS (SELECT 1 FROM planos WHERE codigo = $2 AND ativo = true)
