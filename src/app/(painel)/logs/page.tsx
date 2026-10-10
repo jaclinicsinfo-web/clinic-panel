@@ -70,7 +70,8 @@ export default async function LogsPage({
       </div>
       <p className="mt-2 max-w-3xl text-sm text-muted">
         Cada passo do pagamento: checkout aberto, avisos do Mercado Pago (webhook), consulta do pagamento com Pix ou
-        cartão, confirmação, estorno e envio do acesso. Clique no pedido para ver a linha do tempo dele.
+        cartão, confirmação, estorno, conferência periódica, lembretes de cobrança e e-mails. Clique no pedido para ver a
+        linha do tempo dele.
       </p>
 
       <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -83,6 +84,25 @@ export default async function LogsPage({
           alerta={resumo.avisosRecusados > 0}
         />
         <Cartao titulo="Erros (24 h)" valor={String(resumo.erros)} detalhe="Revisar abaixo" alerta={resumo.erros > 0} />
+        <Cartao
+          titulo="Fila de e-mails"
+          valor={String(resumo.filaPendente)}
+          detalhe={resumo.filaDesistiu > 0 ? `${resumo.filaDesistiu} sem envio nos últimos 7 dias` : "Aguardando envio ou nova tentativa"}
+          alerta={resumo.filaDesistiu > 0}
+        />
+        <Cartao
+          titulo="E-mails com falha (24 h)"
+          valor={String(resumo.emailsFalha)}
+          detalhe="Tentativas que não saíram (SMTP)"
+          alerta={resumo.emailsFalha > 0}
+        />
+        <Cartao
+          titulo="Aplicados pela conferência (24 h)"
+          valor={String(resumo.conferencia)}
+          detalhe="Pagamento ou estorno que o aviso perdeu"
+          alerta={resumo.conferencia > 0}
+        />
+        <Cartao titulo="Lembretes de cobrança (24 h)" valor={String(resumo.lembretes)} detalhe="Clínicas avisadas por e-mail" />
       </section>
 
       <form className="mt-6 flex flex-wrap items-end gap-3 rounded-2xl border border-line bg-card p-4" action="/logs">

@@ -39,6 +39,13 @@ export const TIPOS_EVENTO: Record<string, string> = {
   acesso_enviado: "Acesso enviado",
   acesso_falhou: "Acesso não enviado",
   acesso_reenviado: "Acesso reenviado",
+  email_enviado: "E-mail enviado",
+  email_tentativa_falhou: "E-mail falhou (nova tentativa)",
+  email_desistiu: "E-mail não enviado (desistiu)",
+  lembrete_enfileirado: "Lembrete de cobrança",
+  conciliacao_aplicou: "Aplicado pela conferência",
+  pedido_expirado: "Checkout expirado",
+  pedido_revisao_pendente: "Revisão pendente",
 };
 
 export const MEIOS: Record<string, string> = {
@@ -102,6 +109,11 @@ export interface ResumoEventos {
   pixAguardando: number;
   avisosRecusados: number;
   erros: number;
+  emailsFalha: number;
+  conferencia: number;
+  lembretes: number;
+  filaPendente: number;
+  filaDesistiu: number;
 }
 
 /** Últimas 24 horas. */
@@ -115,10 +127,23 @@ export async function resumoEventos(): Promise<ResumoEventos> {
           WHERE tipo = 'pagamento_ignorado' AND meio = 'pix' AND status = 'pending'
         )::int AS "pixAguardando",
         count(*) FILTER (WHERE tipo = 'aviso_recusado')::int AS "avisosRecusados",
-        count(*) FILTER (WHERE nivel = 'erro')::int AS erros
+        count(*) FILTER (WHERE nivel = 'erro')::int AS erros,
+        count(*) FILTER (WHERE tipo IN ('email_tentativa_falhou', 'email_desistiu'))::int AS "emailsFalha",
+        count(*) FILTER (WHERE tipo = 'conciliacao_aplicou')::int AS conferencia,
+        count(*) FILTER (WHERE tipo = 'lembrete_enfileirado')::int AS lembretes
       FROM eventos_pagamento
       WHERE "criadoEm" > now() - interval '24 hours'
     `);
-    return resultado.rows[0];
+    const fila = await db.query<{ pendentes: number; desistiu: number }>(`
+      SELECT
+        count(*) FILTER (WHERE status IN ('pendente', 'enviando'))::int AS pendentes,
+        count(*) FILTER (WHERE status = 'falhou' AND "atualizadoEm" > now() - interval '7 days')::int AS desistiu
+      FROM emails_saida
+    `);
+    return {
+      ...resultado.rows[0],
+      filaPendente: fila.rows[0]?.pendentes ?? 0,
+      filaDesistiu: fila.rows[0]?.desistiu ?? 0,
+    };
   });
 }
