@@ -11,6 +11,7 @@ import {
   definirStatusClinica,
   excluirClinica as apagarClinica,
 } from "@/lib/clinicas";
+import { reenviarAcessoPedido } from "@/lib/leads";
 import { definirPrecosPlanos } from "@/lib/planos";
 import { exigirSessao } from "@/lib/sessao";
 
@@ -192,4 +193,16 @@ export async function salvarCobranca(formData: FormData) {
     redirect(`/clinicas?erro=${encodeURIComponent(mensagem)}`);
   }
   voltarClinicas("cobranca");
+}
+
+export async function reenviarAcesso(formData: FormData) {
+  await exigirSessao();
+  const id = texto(formData, "pedidoId");
+  try {
+    await reenviarAcessoPedido(id);
+  } catch (erro) {
+    const falha = erro instanceof Error ? erro.message : "Não foi possível reenviar o acesso.";
+    redirect(`/leads?erro=${encodeURIComponent(falha)}`);
+  }
+  redirect("/leads?ok=acesso");
 }

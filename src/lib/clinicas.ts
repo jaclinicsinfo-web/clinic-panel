@@ -25,6 +25,8 @@ export interface ClinicaResumo {
   tipoAcesso: string;
   cicloCobranca: string;
   trialExpiraEm: string | null;
+  /** Fim do período pago pelo Mercado Pago. Nulo: cobrança manual. */
+  pagoAte: string | null;
 }
 
 export interface AdministradorClinica {
@@ -61,7 +63,8 @@ export async function listarClinicas(): Promise<ClinicaResumo[]> {
         c."situacaoCobranca",
         c."tipoAcesso",
         c."cicloCobranca",
-        c."trialExpiraEm"
+        c."trialExpiraEm",
+        c."pagoAte"
       FROM clinicas c
       JOIN planos p ON p.id = c."planoId"
       LEFT JOIN LATERAL (
@@ -77,6 +80,7 @@ export async function listarClinicas(): Promise<ClinicaResumo[]> {
     return resultado.rows.map((clinica) => ({
       ...clinica,
       trialExpiraEm: clinica.trialExpiraEm ? new Date(clinica.trialExpiraEm).toISOString() : null,
+      pagoAte: clinica.pagoAte ? new Date(clinica.pagoAte).toISOString() : null,
     }));
   });
 }

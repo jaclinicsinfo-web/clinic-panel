@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { AcoesClinica } from "@/app/(painel)/clinicas/acoes";
 import { Aviso } from "@/components/campo";
-import { rotuloAcesso } from "@/lib/acesso";
+import { rotuloAcesso, situacaoPorVencimento } from "@/lib/acesso";
 import { catalogoPlanos, listarClinicas } from "@/lib/clinicas";
 
 export const dynamic = "force-dynamic";
@@ -75,6 +75,7 @@ export default async function ClinicasPage({
                 {clinicas.map((clinica) => {
                   const ativa = clinica.status !== "desativada";
                   const acesso = rotuloAcesso(clinica.tipoAcesso, clinica.trialExpiraEm);
+                  const porVencimento = clinica.tipoAcesso === "pago" ? situacaoPorVencimento(clinica.pagoAte) : null;
                   return (
                     <tr key={clinica.id} className="border-t border-line">
                       <td className="px-5 py-3">
@@ -87,7 +88,7 @@ export default async function ClinicasPage({
                       <td className="px-5 py-3">
                         <span className="font-medium">{clinica.planoNome}</span>
                         {clinica.cicloCobranca === "anual" ? (
-                          <span className="mt-1 block text-xs text-muted">Anual à vista</span>
+                          <span className="mt-1 block text-xs text-muted">Anual</span>
                         ) : null}
                       </td>
                       <td className="px-5 py-3">
@@ -99,11 +100,17 @@ export default async function ClinicasPage({
                       </td>
                       <td className="px-5 py-3">{clinica.adminEmail ?? "Sem administrador"}</td>
                       <td className="px-5 py-3">
-                        <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${classeSituacao[clinica.situacaoCobranca] ?? "bg-paper text-muted"}`}
-                        >
-                          {rotuloSituacao[clinica.situacaoCobranca] ?? clinica.situacaoCobranca}
-                        </span>
+                        {porVencimento ? (
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${porVencimento.classe}`}>
+                            {porVencimento.texto}
+                          </span>
+                        ) : (
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${classeSituacao[clinica.situacaoCobranca] ?? "bg-paper text-muted"}`}
+                          >
+                            {rotuloSituacao[clinica.situacaoCobranca] ?? clinica.situacaoCobranca}
+                          </span>
+                        )}
                       </td>
                       <td className="px-5 py-3">
                         <AcoesClinica
