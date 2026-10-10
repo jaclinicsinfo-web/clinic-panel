@@ -8,6 +8,7 @@ const links = [
   { href: "/clinicas", rotulo: "Clínicas" },
   { href: "/planos", rotulo: "Planos" },
   { href: "/leads", rotulo: "Leads" },
+  { href: "/logs", rotulo: "Logs" },
 ];
 
 export function NavegacaoPainel() {
