@@ -29,11 +29,29 @@ export default async function FinanceiroPage() {
         Recebimentos e despesas de todas as clínicas. O resultado do mês é o que entrou menos o que foi pago.
       </p>
 
-      <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Cartao titulo="Recebido no mês" valor={reais(resumo.recebido)} detalhe="Cobranças pagas" />
         <Cartao titulo="A receber" valor={reais(resumo.aReceber)} detalhe="Cobranças pendentes" />
         <Cartao titulo="Despesas pagas" valor={reais(resumo.despesasPagas)} detalhe="Pagas neste mês" />
         <Cartao titulo="Resultado do mês" valor={reais(resumo.resultado)} detalhe={`${reais(resumo.aPagar)} ainda a pagar`} />
+      </section>
+
+      <div className="mt-8 flex items-center justify-between">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-muted">Assinaturas</h2>
+        <Link href="/pagamentos" className="text-sm font-medium text-brand hover:text-brand-strong">
+          Ver pagamentos
+        </Link>
+      </div>
+      <section className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <Cartao
+          titulo="Assinaturas recebidas no mês"
+          valor={reais(resumo.assinaturasRecebidas)}
+          detalhe={
+            resumo.assinaturasPagamentos === 1
+              ? "1 pagamento pelo Mercado Pago"
+              : `${resumo.assinaturasPagamentos} pagamentos pelo Mercado Pago`
+          }
+        />
         <Cartao titulo="Mensalidades em dia" valor={reais(resumo.mensalidadesEmDia)} detalhe={`${reais(resumo.mensalidades)} contratadas`} />
         <Cartao titulo="Mensalidades em aberto" valor={reais(resumo.mensalidadesEmAberto)} detalhe="Pendentes e atrasadas" />
       </section>

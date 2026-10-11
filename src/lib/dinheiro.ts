@@ -12,14 +12,16 @@ export function reais(valor: string | number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(valor) || 0);
 }
 
+/** Mês corrente no fuso de São Paulo (o servidor pode estar em UTC). */
 export function periodoDoMes(referencia = new Date()) {
-  const inicio = new Date(referencia.getFullYear(), referencia.getMonth(), 1);
-  const fim = new Date(referencia.getFullYear(), referencia.getMonth() + 1, 1);
-  const iso = (data: Date) => {
-    const mes = String(data.getMonth() + 1).padStart(2, "0");
-    const dia = String(data.getDate()).padStart(2, "0");
-    return `${data.getFullYear()}-${mes}-${dia}`;
-  };
-  const rotulo = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(inicio);
-  return { inicio: iso(inicio), fim: iso(fim), rotulo };
+  const [ano, mes] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit" })
+    .format(referencia)
+    .split("-")
+    .map(Number);
+  const iso = (a: number, m: number) => `${a}-${String(m).padStart(2, "0")}-01`;
+  const proximo = mes === 12 ? { a: ano + 1, m: 1 } : { a: ano, m: mes + 1 };
+  const rotulo = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" }).format(
+    new Date(Date.UTC(ano, mes - 1, 15)),
+  );
+  return { inicio: iso(ano, mes), fim: iso(proximo.a, proximo.m), rotulo };
 }

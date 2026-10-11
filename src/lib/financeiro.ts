@@ -25,7 +25,30 @@ export interface ResumoFinanceiro {
   mensalidades: number;
   mensalidadesEmDia: number;
   mensalidadesEmAberto: number;
+  /** Pedidos de assinatura pagos pelo Mercado Pago no mês (não conta os devolvidos). */
+  assinaturasRecebidas: number;
+  assinaturasPagamentos: number;
   linhas: LinhaFinanceira[];
+}
+
+/** Soma dos pedidos de assinatura pagos no período (dias no fuso de São Paulo). */
+async function assinaturasPagasNoPeriodo(inicio: string, fim: string) {
+  return comSistema(async (db) => {
+    const resultado = await db.query<{ quantidade: number; total: string }>(
+      `
+      SELECT count(*)::int AS quantidade, COALESCE(sum(valor), 0)::text AS total
+      FROM pedidos_assinatura
+      WHERE status = 'pago'
+        AND "pagoEm" >= ($1::date)::timestamp AT TIME ZONE 'America/Sao_Paulo'
+        AND "pagoEm" < ($2::date)::timestamp AT TIME ZONE 'America/Sao_Paulo'
+      `,
+      [inicio, fim],
+    );
+    return {
+      quantidade: resultado.rows[0]?.quantidade ?? 0,
+      total: Number(resultado.rows[0]?.total ?? 0),
+    };
+  });
 }
 
 export async function resumoFinanceiro(): Promise<ResumoFinanceiro> {
@@ -88,6 +111,10 @@ export async function resumoFinanceiro(): Promise<ResumoFinanceiro> {
     0,
   );
   const mensalidades = linhas.reduce((total, linha) => total + (Number(linha.valorMensal) || 0), 0);
+  const { quantidade: assinaturasPagamentos, total: assinaturasRecebidas } = await assinaturasPagasNoPeriodo(
+    periodo.inicio,
+    periodo.fim,
+  );
 
   return {
     rotulo: periodo.rotulo,
@@ -99,6 +126,8 @@ export async function resumoFinanceiro(): Promise<ResumoFinanceiro> {
     mensalidades,
     mensalidadesEmDia,
     mensalidadesEmAberto: mensalidades - mensalidadesEmDia,
+    assinaturasRecebidas,
+    assinaturasPagamentos,
     linhas,
   };
 }

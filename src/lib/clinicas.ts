@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import type { PoolClient } from "pg";
 
 import { ambiente } from "@/lib/ambiente";
 import { comSistema } from "@/lib/db";
@@ -27,6 +28,11 @@ export interface ClinicaResumo {
   trialExpiraEm: string | null;
   /** Fim do período pago pelo Mercado Pago. Nulo: cobrança manual. */
   pagoAte: string | null;
+  /** Cobrança automática no cartão ativa no Mercado Pago. */
+  automatica: boolean;
+  /** Troca (downgrade) que vale no próximo vencimento. */
+  planoAgendadoNome: string | null;
+  cicloAgendado: string | null;
 }
 
 export interface AdministradorClinica {
@@ -64,9 +70,16 @@ export async function listarClinicas(): Promise<ClinicaResumo[]> {
         c."tipoAcesso",
         c."cicloCobranca",
         c."trialExpiraEm",
-        c."pagoAte"
+        c."pagoAte",
+        EXISTS (
+          SELECT 1 FROM assinaturas_recorrentes ar
+          WHERE ar."clinicaId" = c.id AND ar.status = 'ativa'
+        ) AS automatica,
+        pag.nome AS "planoAgendadoNome",
+        c."cicloAgendado"
       FROM clinicas c
       JOIN planos p ON p.id = c."planoId"
+      LEFT JOIN planos pag ON pag.id = c."planoAgendadoId"
       LEFT JOIN LATERAL (
         SELECT u.nome, u.email
         FROM usuarios u
@@ -90,12 +103,27 @@ export async function buscarClinica(id: string): Promise<ClinicaResumo | null> {
   return clinicas.find((item) => item.id === id) ?? null;
 }
 
+/**
+ * Com a cobrança automática no Mercado Pago, mudar o plano, desativar ou excluir por aqui deixaria o cartão
+ * sendo cobrado pelo valor antigo. Primeiro cancela a automática (botão na ficha da clínica).
+ */
+async function exigirSemAutomatica(db: PoolClient, clinicaId: string, acao: string) {
+  const ativa = await db.query(
+    `SELECT 1 FROM assinaturas_recorrentes WHERE "clinicaId" = $1 AND status <> 'cancelada' LIMIT 1`,
+    [clinicaId],
+  );
+  if (ativa.rowCount) {
+    throw new Error(`Esta clínica tem cobrança automática no cartão. Cancele a automática na ficha da clínica antes de ${acao}.`);
+  }
+}
+
 export async function definirPlano(clinicaId: string, codigo: string) {
   if (!PLANOS.some((plano) => plano.codigo === codigo)) {
     throw new Error("Plano inválido.");
   }
 
   await comSistema(async (db) => {
+    await exigirSemAutomatica(db, clinicaId, "trocar o plano");
     const atualizado = await db.query(
       `
       UPDATE clinicas
@@ -153,6 +181,7 @@ const SITUACOES = ["em_dia", "pendente", "atrasada"] as const;
 
 export async function definirStatusClinica(clinicaId: string, status: "ativa" | "desativada") {
   await comSistema(async (db) => {
+    if (status === "desativada") await exigirSemAutomatica(db, clinicaId, "desativar a clínica");
     const atualizado = await db.query(
       `UPDATE clinicas SET status = $2, "atualizadoEm" = now() WHERE id = $1`,
       [clinicaId, status],
@@ -180,6 +209,11 @@ export async function definirConta(clinicaId: string, codigo: string, situacao: 
   }
 
   await comSistema(async (db) => {
+    const atual = await db.query<{ codigo: string }>(
+      `SELECT p.codigo FROM clinicas c JOIN planos p ON p.id = c."planoId" WHERE c.id = $1`,
+      [clinicaId],
+    );
+    if (atual.rows[0] && atual.rows[0].codigo !== codigo) await exigirSemAutomatica(db, clinicaId, "trocar o plano");
     const atualizado = await db.query(
       `
       UPDATE clinicas
@@ -256,6 +290,7 @@ const APAGAR_CLINICA = [
 
 export async function excluirClinica(clinicaId: string) {
   await comSistema(async (db) => {
+    await exigirSemAutomatica(db, clinicaId, "excluir a clínica");
     let apagouClinica = 0;
     for (const sql of APAGAR_CLINICA) {
       const resultado = await db.query(sql, [clinicaId]);

@@ -111,6 +111,14 @@ export default async function ClinicasPage({
                             {rotuloSituacao[clinica.situacaoCobranca] ?? clinica.situacaoCobranca}
                           </span>
                         )}
+                        {clinica.automatica ? (
+                          <span
+                            className="mt-1 flex w-fit rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-brand"
+                            title="Cobrança automática no cartão ativa no Mercado Pago"
+                          >
+                            Automática
+                          </span>
+                        ) : null}
                       </td>
                       <td className="px-5 py-3">
                         <AcoesClinica

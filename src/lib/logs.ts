@@ -46,6 +46,17 @@ export const TIPOS_EVENTO: Record<string, string> = {
   conciliacao_aplicou: "Aplicado pela conferência",
   pedido_expirado: "Checkout expirado",
   pedido_revisao_pendente: "Revisão pendente",
+  troca_agendada: "Troca de plano agendada",
+  troca_agendada_cancelada: "Troca agendada cancelada",
+  troca_aplicada: "Troca de plano aplicada",
+  troca_nao_aplicada: "Troca agendada não aplicada",
+  automatica_criada: "Automática: aguardando cartão",
+  automatica_ativada: "Automática ativada",
+  automatica_cancelada: "Automática cancelada",
+  automatica_atualizada: "Automática atualizada",
+  cobranca_automatica_aprovada: "Cobrança automática aprovada",
+  cobranca_automatica_recusada: "Cobrança automática recusada",
+  reajuste_agendado: "Reajuste agendado (automática)",
 };
 
 export const MEIOS: Record<string, string> = {
@@ -70,7 +81,7 @@ export async function listarEventos(filtro: FiltroEventos = {}): Promise<EventoP
   if (busca) {
     if (UUID.test(busca)) {
       const p = param(busca);
-      condicoes.push(`(e."pedidoId" = ${p}::uuid OR e."clinicaId" = ${p}::uuid)`);
+      condicoes.push(`(e."pedidoId" = ${p}::uuid OR COALESCE(e."clinicaId", ped."clinicaId") = ${p}::uuid)`);
     } else {
       const p = param(`%${busca}%`);
       condicoes.push(

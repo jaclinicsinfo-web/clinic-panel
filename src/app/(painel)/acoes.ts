@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { cancelarAutomaticaClinica } from "@/lib/automatica";
 import {
   abrirClinica,
   definirCobranca,
@@ -205,4 +206,16 @@ export async function reenviarAcesso(formData: FormData) {
     redirect(`/leads?erro=${encodeURIComponent(falha)}`);
   }
   redirect("/leads?ok=acesso");
+}
+
+export async function cancelarAutomatica(formData: FormData) {
+  await exigirSessao();
+  const id = texto(formData, "clinicaId");
+  try {
+    await cancelarAutomaticaClinica(id);
+  } catch (erro) {
+    const falha = erro instanceof Error ? erro.message : "Não foi possível cancelar a cobrança automática.";
+    redirect(`/clinicas/${encodeURIComponent(id)}?erro=${encodeURIComponent(falha)}`);
+  }
+  redirect(`/clinicas/${encodeURIComponent(id)}?ok=automatica`);
 }
